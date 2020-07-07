@@ -25,7 +25,7 @@ def GNSS_download (station=['baja','loan','camn','genu','chiv','beve'],date='202
             By default it's a <list> containing all those files
 
     '''
-    
+    # verifica su input station
     if type(station) == str:
         if station not in ['baja','loan','camn','genu','chiv','beve']:
             print('ERROR: {} is not a valid station Regione Liguria GNSS Network'.format(station))
@@ -41,11 +41,10 @@ def GNSS_download (station=['baja','loan','camn','genu','chiv','beve'],date='202
             return
     elif type(station) != list or type(station) != str:
         print('ERROR: station must be a <str> or a <list>, {} is a {}'.format(station,type(station)))
-        return
+        return 
     
-    tempo=datetime(int(date[0:4]),int(date[5:7]),int(date[8:10]))
-    print(tempo.strftime('%j'))
-
+    
+    #verifica su input obs_type
     if type(obs_type) == str:
         if obs_type not in ['obs','nav','gnav']:
             print('ERROR: {} is not a valid observation type'.format(obs_type))
@@ -54,7 +53,7 @@ def GNSS_download (station=['baja','loan','camn','genu','chiv','beve'],date='202
         if all(isinstance(item, str) for item in obs_type):
             for o in obs_type:
                 if o not in ['obs','nav','gnav']:
-                    print('ERROR: {} is not a valid observation type'.format(s))
+                    print('ERROR: {} is not a valid observation type'.format(o))
                     return    
         else:
             print('ERROR: all element in obs_type must be a <str> \nat least one element in {} is not a <str>'.format(obs_type))
@@ -63,6 +62,12 @@ def GNSS_download (station=['baja','loan','camn','genu','chiv','beve'],date='202
         print('ERROR: obs_type must be a <str> or a <list>, {} is a {}'.format(obs_type,type(obs_type)))
         return
 
+    #verifica su input hour
+
+
+
+    tempo=datetime(int(date[0:4]),int(date[5:7]),int(date[8:10]))
+    #print(tempo.strftime('%j'))
 
     if rate == 30 or rate == 5:
         print('you can only download daily data so hour input will be ignored')
@@ -75,10 +80,13 @@ def GNSS_download (station=['baja','loan','camn','genu','chiv','beve'],date='202
                 link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}n.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),str(tempo.year)[0:2])
             elif obs_type=='gnav':
                 link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}g.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),str(tempo.year)[0:2])
-            print(link)
+            dwnld=download(link)
+            fname=link[64:]
+            return (fname,dwnld)
         
         elif type(station) == list and type(obs_type)==str:
             print('loop on stations')
+            results=[]
             for s in station:
                 if obs_type=='obs':
                     link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}d.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),str(tempo.year)[0:2])
@@ -86,40 +94,202 @@ def GNSS_download (station=['baja','loan','camn','genu','chiv','beve'],date='202
                     link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}n.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),str(tempo.year)[0:2])
                 elif obs_type=='gnav':
                     link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}g.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),str(tempo.year)[0:2])
-                print(link)
+                dwnld=download(link)
+                fname=link[64:]
+                results.append((fname,dwnld))
+            return results
+
         elif type(station) == str and type(obs_type)==list:
             print('loop on obs_types')
+            results=[]
+            for o in obs_type:
+                if o =='obs':
+                    link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}d.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),str(tempo.year)[0:2])
+                elif o =='nav':
+                    link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}n.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),str(tempo.year)[0:2])
+                elif o == 'gnav':
+                    link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}g.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),str(tempo.year)[0:2])
+                dwnld=download(link)
+                fname=link[64:]
+                results.append((fname,dwnld))
+            return results
+
 
         elif type(station)==list and type(obs_type)==list:
             print('loop on stations and obs_types')
+            results=[]
+            for s in station:
+                for o in obs_type:
+                    if o=='obs':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}d.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),str(tempo.year)[0:2])
+                    elif o=='nav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}n.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),str(tempo.year)[0:2])
+                    elif o=='gnav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}0.{}g.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),str(tempo.year)[0:2])
 
-
-
+                    dwnld=download(link)
+                    fname=link[64:]
+                    results.append((fname,dwnld))
+            return results
 
     elif rate == 1:
         print('you can download hourly data')
+        if type(hour)==str:
+            if type(station) == str and type(obs_type)==str:
+                print('no loop') 
+                if obs_type=='obs':
+                    link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                elif obs_type=='nav':
+                    link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                elif obs_type=='gnav':
+                    link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                dwnld=download(link)
+                fname=link[63:]
+                return (fname,dwnld)
+
+            elif type(station) == list and type(obs_type)==str:
+                print('loop on stations')
+                results=[]
+                for s in station:
+                    if obs_type=='obs':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                    elif obs_type=='nav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                    elif obs_type=='gnav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                    dwnld=download(link)
+                    fname=link[63:]
+                    results.append((fname,dwnld))
+                return results
+            elif type(station) == str and type(obs_type)==list:
+                print('loop on obs_types')
+                results=[]
+                for o in obs_type:
+                    if o =='obs':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                    elif o =='nav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                    elif o == 'gnav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                    dwnld=download(link)
+                    fname=link[63:]
+                    results.append((fname,dwnld))
+                return results
+
+            elif type(station)==list and type(obs_type)==list:
+                print('loop on stations and obs_types')
+                results=[]
+                for s in station:
+                    for o in obs_type:
+                        if o=='obs':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                        elif o=='nav':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+                        elif o=='gnav':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),hour,str(tempo.year)[0:2])
+
+                        dwnld=download(link)
+                        fname=link[63:]
+                        results.append((fname,dwnld))
+                return results
+
+        elif type(hour)==list:
+            results=[]
+            for h in hour:
+                
+                if type(station) == str and type(obs_type)==str:
+                    print('no loop') 
+                    if obs_type=='obs':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                    elif obs_type=='nav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                    elif obs_type=='gnav':
+                        link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                    dwnld=download(link)
+                    fname=link[63:]
+                    return (fname,dwnld)
+                elif type(station) == list and type(obs_type)==str:
+                    print('loop on stations')
+                    
+                    for s in station:
+                        if obs_type=='obs':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                        elif obs_type=='nav':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                        elif obs_type=='gnav':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                        dwnld=download(link)
+                        fname=link[63:]
+                        results.append((fname,dwnld))
+                    
+                elif type(station) == str and type(obs_type)==list:
+                    print('loop on obs_types')
+                    
+                    for o in obs_type:
+                        if o =='obs':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                        elif o =='nav':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                        elif o == 'gnav':
+                            link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(station.upper(),rate,date,station,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                        dwnld=download(link)
+                        fname=link[63:]
+                        results.append((fname,dwnld))
+                    
+
+                elif type(station)==list and type(obs_type)==list:
+                    print('loop on stations and obs_types')
+                    
+                    for s in station:
+                        for o in obs_type:
+                            if o=='obs':
+                                link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}d.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                            elif o=='nav':
+                                link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}n.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+                            elif o=='gnav':
+                                link='http://gnss.regione.liguria.it/data/{}/rinex/{}sec/{}/{}{}{}.{}g.Z'.format(s.upper(),rate,date,s,tempo.strftime('%j'),h,str(tempo.year)[0:2])
+
+                            dwnld=download(link)
+                            fname=link[63:]
+                            results.append((fname,dwnld))
+            return results
     else:
         print('ERROR: rate not supported')
         return
 
 
+def download(link,out=''):
+    '''function to download a file'''
+
+    try:
+        gnssfile=wget.download(link)
+        result=0 
+    except Exception as e:
+        print(e)
+        result=1
+    return result
     
     
     
 
 
+def main():
+    inizio=datetime(year=2020,month=6,day=1)
 
-inizio=datetime(year=2020,month=6,day=1)
-
-fine=datetime(year=2020,month=6,day=5)
-data_tbd=f'{inizio.year:04}/{inizio.month:02}/{inizio.day:02}'
-GNSS_download(['genu','camn'],data_tbd,30,'a','gnav')
-sys.exit()
-while inizio<=fine:
+    fine=datetime(year=2020,month=6,day=5)
     data_tbd=f'{inizio.year:04}/{inizio.month:02}/{inizio.day:02}'
 
-    
-    
+
+    file_scaricato=GNSS_download('genu',data_tbd,1,'a','obs')
+    print('\n',file_scaricato)
+    sys.exit()
+    while inizio<=fine:
+        data_tbd=f'{inizio.year:04}/{inizio.month:02}/{inizio.day:02}'
+
+        
+        
 
 
-    inizio+=timedelta(days=1)
+        inizio+=timedelta(days=1)
+if __name__=="__main__":
+    main()
