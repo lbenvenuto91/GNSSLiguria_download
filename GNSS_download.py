@@ -271,6 +271,39 @@ def download(link,out=''):
     
     
     
+def uncompress (path,obj):
+    '''
+    The function uncompress the downloaded files and returns 3 lists with filenames:
+    one for obs files (hatanaka format is expected), one for nav files and the last
+    for gnav files.
+    '''
+    
+    obs=[]
+    nav=[]
+    gnav=[]
+    if type(obj)==tuple:
+        os.system('uncompress {}{}'.format(path,obj[0]))
+    elif type(obj) == list:
+        for i in obj:
+            os.system('uncompress {}{}'.format(path,i[0]))
+    
+    for file in os.listdir():
+        if file.endswith("d") and not file.endswith(".md"):
+            obs.append(file)
+        elif file.endswith("n"):
+            nav.append(file)
+        elif file.endswith("g"):
+            gnav.append(file)
+        else:
+            continue
+
+    return obs,nav,gnav
+    
+
+
+        
+    
+
 
 
 def main():
@@ -278,10 +311,14 @@ def main():
 
     fine=datetime(year=2020,month=6,day=5)
     data_tbd=f'{inizio.year:04}/{inizio.month:02}/{inizio.day:02}'
+    
 
-
-    file_scaricato=GNSS_download('genu',data_tbd,1,'a','obs')
-    print('\n',file_scaricato)
+    file_scaricato=GNSS_download(['genu','chiv','baja'],data_tbd,30,'a',['obs','nav','gnav'])
+    #print('\n',file_scaricato[0][0])
+    obs,nav,gnav=uncompress('./',file_scaricato)
+    print('\n',obs)
+    print(nav)
+    print(gnav)
     sys.exit()
     while inizio<=fine:
         data_tbd=f'{inizio.year:04}/{inizio.month:02}/{inizio.day:02}'
