@@ -11,7 +11,7 @@
  - ore: è una stringa o una lista (contenente le lettere dell'alfabeto dalla a alla x)
  - tipo di osservazioni: può essere una strina o una lista con le tipologie di osservabili desiderate (obs, nav o gnav)
  
- ## Esempi
+ ## Modalità di scaricamento file
 
 Per scaricare il file obs giornaliero di genu a 30 secondi, relativo al 2 Giugno 2020, la funzione deve essere chiamata in questo modo 
 
@@ -55,5 +55,13 @@ GNSS_download(station=['baja','loan','camn','genu','chiv','beve'],date='2020/01/
 ```
 dove la lista hour corrisponde a tutte le lettere dell'alfabeto dalla a alla x.
 
+## Estrazione file compressi
+
+E' stata implementata anche l'estrazione dei file che, di default, vengono scaricati compressi (.Z). Tale funzione però funziona solo sui sistemi UNIX 
+In questo modo si hanno a disposizione i file .yyd (file di osservabili hatanakato) .yyn (navigazionale GPS) e .yyg (navigazionale GLONASS)
+
+## Hatanaka
+
+Funzione per estrarre un file di osservabili compresso con Hatanaka: .yyd --> .yyo
 Se si esegue la funzione dallo script GNSS_download.py, bisognerà settare i vari input nel main. Lo script scarica quindi i file richiesti nella stessa cartella dove è salvato.
 
